@@ -2,14 +2,25 @@ import {WeatherResponse} from '../models/WeatherResponse';
 import axiosInstance from './client';
 
 const endpointDefaultLocation = '/api/location';
-// const endpointTrackSnippet = '/track.snippet.get';
+const endpointWeatherStateIcon =
+  'https://www.metaweather.com/static/img/weather/png/64';
+const endpointPlaceInfo = '/api/location/search/';
 
 const getWeatherInfoFromId = (woeid: number) =>
   axiosInstance.get<WeatherResponse>(`${endpointDefaultLocation}/${woeid}/`);
 
-/* const getSmallLyric = (track_id: number) =>
-  axiosInstance.get<SnippetResponse>(endpointTrackSnippet, {
-    params: {track_id},
-  }); */
+const getWeatherStateIconURL = (weatherState: string) => {
+  return `${endpointWeatherStateIcon}/${weatherState}.png`;
+};
 
-export default {getWeatherInfoFromId};
+const getWOEIdFromPlace = (query: string) => {
+  axiosInstance.get<WeatherResponse>(endpointDefaultLocation, {
+    params: {query},
+  });
+};
+
+export default {
+  getWeatherInfoFromId,
+  getWeatherStateIconURL,
+  getWOEIdFromPlace,
+};

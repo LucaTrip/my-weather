@@ -13,7 +13,10 @@ const HomeNavigator = () => (
       options={{headerShown: false}}></HomeStack.Screen>
     <HomeStack.Screen
       name="WeatherDetail"
-      component={WeatherDetail}></HomeStack.Screen>
+      component={WeatherDetail}
+      options={({route}) => ({
+        title: `${route.params?.city} forecast`,
+      })}></HomeStack.Screen>
   </HomeStack.Navigator>
 );
 
