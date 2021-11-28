@@ -1,16 +1,15 @@
 import React, {useState} from 'react';
-import {Image, StyleSheet, Text, View, Modal} from 'react-native';
-import {FAB, Card, TextInput, Button} from 'react-native-paper';
+import {Image, StyleSheet, Text, View} from 'react-native';
+import {FAB, Card} from 'react-native-paper';
 import moment from 'moment';
 
 import weatherApi from '../api/weatherRequest';
-import CustomSafeAreaView from './CustomSafeAreaView';
 import {PlaceForecast} from '../models/WeatherResponse';
 import CustomModal from './CustomModal';
 
 type Props = {
   place?: string;
-  forecastWeather?: PlaceForecast;
+  forecastWeather: PlaceForecast;
 };
 
 const WeatherCard: React.FC<Props> = ({place, forecastWeather}) => {
@@ -20,22 +19,14 @@ const WeatherCard: React.FC<Props> = ({place, forecastWeather}) => {
     setShowModal(!showModal);
   };
 
-  let formattedDate = '',
-    formattedHours = '',
-    iconURL = '',
-    minTemp = 0,
-    maxTemp = 0,
-    weatherStateName = '';
-  if (forecastWeather) {
-    formattedDate = moment(forecastWeather.created).format('MMM DD');
-    formattedHours = moment(forecastWeather.created).format('hh:mm');
+  let formattedDate = moment(forecastWeather.created).format('MMM DD'),
+    formattedHours = moment(forecastWeather.applicable_date).format('hh:mm'),
     iconURL = weatherApi.getWeatherStateIconURL(
       forecastWeather.weather_state_abbr,
-    );
-    minTemp = Math.trunc(forecastWeather.min_temp);
-    maxTemp = Math.trunc(forecastWeather.max_temp);
+    ),
+    minTemp = Math.trunc(forecastWeather.min_temp),
+    maxTemp = Math.trunc(forecastWeather.max_temp),
     weatherStateName = forecastWeather.weather_state_name;
-  }
 
   return (
     <>
@@ -64,7 +55,13 @@ const WeatherCard: React.FC<Props> = ({place, forecastWeather}) => {
 
           <View style={styles.footerContainer}>
             <Text
-              style={[styles.bigFont, styles.whiteFont, styles.uppercaseFont]}>
+              numberOfLines={1}
+              style={[
+                styles.bigFont,
+                styles.whiteFont,
+                styles.uppercaseFont,
+                {width: '80%'},
+              ]}>
               {place}
             </Text>
             <FAB
@@ -99,7 +96,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6.27,
     elevation: 10,
   },
-  bigFont: {fontSize: 40, color: 'black'},
+  bigFont: {fontSize: 35, color: 'black'},
   smallFont: {fontSize: 25, color: 'black'},
   whiteFont: {color: 'white'},
   uppercaseFont: {textTransform: 'uppercase'},

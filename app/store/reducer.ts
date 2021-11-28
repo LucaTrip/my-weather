@@ -1,7 +1,9 @@
 import * as actionTypes from './actionTypes';
+import {StoreAction, StoreState} from './type';
 
 const initialState = {
   city: '',
+  location: undefined,
   cities: [],
 };
 
@@ -14,7 +16,13 @@ const reducer = (
       return {
         ...state,
         city: action.city,
-        cities: [...state.cities, action.city],
+        cities: [...state.cities, action.city!],
+      };
+
+    case actionTypes.LOCATION_TO_SEARCH:
+      return {
+        ...state,
+        location: action.location,
       };
   }
 

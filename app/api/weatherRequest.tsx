@@ -13,9 +13,9 @@ const getWeatherStateIconURL = (weatherState: string) =>
   `${endpointWeatherStateIcon}/${weatherState}.png`;
 
 const searchLocation = (
-  place?: string,
-  latitude?: number,
-  longitude?: number,
+  place?: string | null,
+  latitude?: number | null,
+  longitude?: number | null,
 ) => {
   let customParams = {};
 

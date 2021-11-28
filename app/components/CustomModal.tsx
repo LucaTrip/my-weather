@@ -1,7 +1,10 @@
 import React, {useState} from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,9 +14,18 @@ import {Button, TextInput} from 'react-native-paper';
 import {Dispatch} from 'redux';
 import {useDispatch, useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  request,
+  PERMISSIONS,
+  RESULTS,
+  openSettings,
+} from 'react-native-permissions';
+import Geolocation from 'react-native-geolocation-service';
 
 import CustomSafeAreaView from './CustomSafeAreaView';
-import {addCityToSearch} from '../store/actionMethods';
+import {addCityToSearch, addLocationToSearch} from '../store/actionMethods';
+import {Location} from '../models/Location';
+import {StoreState} from '../store/type';
 
 type Props = {
   visibility: boolean;
@@ -22,19 +34,84 @@ type Props = {
 
 const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
   const [city, setCity] = useState('');
+  const [fetchingLocation, setFetchingLocation] = useState(false);
+  const [location, setLocation] = useState<Location>();
 
   const citiesFromStore = useSelector((state: StoreState) => state.cities);
 
   const dispatch: Dispatch<any> = useDispatch();
 
-  const modalWillDismiss = () => {
+  const modalWillDismiss = (useLocation?: boolean) => {
     handleCloseModal();
+
+    if (useLocation) {
+      setTimeout(() => {
+        dispatch(addLocationToSearch(location!));
+        setCity('');
+      }, 500);
+      return;
+    }
 
     if (city.length) {
       setTimeout(() => {
         dispatch(addCityToSearch(city));
         setCity('');
       }, 500);
+    }
+  };
+
+  const handleUserLocation = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const locationPermission = await request(
+          PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+        );
+        switch (locationPermission) {
+          case RESULTS.GRANTED:
+            // 'The permission is granted'
+            setFetchingLocation(true);
+
+            Geolocation.getCurrentPosition(
+              response => {
+                console.log('[getCurrentPosition] success', response);
+                setFetchingLocation(false);
+                setLocation(response);
+                modalWillDismiss(true);
+              },
+              error => {
+                console.log('[getCurrentPosition] error', error);
+                setFetchingLocation(false);
+                Alert.alert('Location Error', error.message);
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 10000,
+              },
+            );
+            break;
+
+          case RESULTS.BLOCKED:
+            // 'The permission is denied and not requestable anymore'
+            Alert.alert(
+              'Location',
+              'If you want to use your GPS position to see the forecast for your city, then you will need to enable location permission manually in the settings',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {text: 'Settings', onPress: () => openSettings()},
+              ],
+            );
+            break;
+        }
+      } else {
+        // TODO
+      }
+    } catch (error: any) {
+      console.log('[requestAuthorization] error', error);
+      Alert.alert('Location Error', error.message);
     }
   };
 
@@ -45,10 +122,28 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
       onRequestClose={modalWillDismiss}>
       <CustomSafeAreaView style={styles.modalInnerContainer}>
         <View style={styles.closeButtonContainer}>
+          <TouchableOpacity>
+            <Icon
+              name="gps-fixed"
+              size={30}
+              color="black"
+              onPress={handleUserLocation}
+            />
+          </TouchableOpacity>
+
           <Button mode="text" onPress={modalWillDismiss}>
             Close
           </Button>
         </View>
+
+        {fetchingLocation ? (
+          <View style={{flexDirection: 'row', marginBottom: 20}}>
+            <ActivityIndicator size="small" />
+            <Text style={{color: 'balck'}}>
+              We are retrieving your current position
+            </Text>
+          </View>
+        ) : null}
 
         <Text style={styles.info}>
           Which city do you want to know the weather for today and for the next
@@ -112,7 +207,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'whitesmoke',
   },
   closeButtonContainer: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
   info: {

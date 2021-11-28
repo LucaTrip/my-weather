@@ -8,10 +8,15 @@ import weatherApi from '../api/weatherRequest';
 import WeatherCard from '../components/WeatherCard';
 import ApiError from '../components/ApiError';
 import {WeatherResponse} from '../models/WeatherResponse';
+import {StoreState} from '../store/type';
+import {Location} from '../models/Location';
 
 type HomeStackParamList = {
   Home: undefined;
-  WeatherDetail: {city: string};
+  WeatherDetail: {
+    city?: string | undefined;
+    userLocation?: Location | undefined;
+  };
 };
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
@@ -25,6 +30,7 @@ const HomeScreen = () => {
   const [isError, setIsError] = useState(false);
 
   const cityFromStore = useSelector((state: StoreState) => state.city);
+  const locationFromStore = useSelector((state: StoreState) => state.location);
 
   const navigation = useNavigation<HomeScreenNavigationProp>();
 
@@ -47,7 +53,9 @@ const HomeScreen = () => {
     if (!placeForecast) handleDefaultWeatherLocation();
 
     if (cityFromStore) navigation.push('WeatherDetail', {city: cityFromStore});
-  }, [placeForecast, cityFromStore]);
+    if (locationFromStore)
+      navigation.push('WeatherDetail', {userLocation: locationFromStore});
+  }, [placeForecast, cityFromStore, locationFromStore]);
 
   return (
     <View style={styles.mainContainer}>
@@ -57,10 +65,10 @@ const HomeScreen = () => {
         <ApiError handleRetryButton={handleDefaultWeatherLocation} />
       ) : null}
 
-      {!isError && !loading ? (
+      {!isError && !loading && placeForecast ? (
         <WeatherCard
-          forecastWeather={placeForecast?.consolidated_weather[0]}
-          place={placeForecast?.title}
+          forecastWeather={placeForecast.consolidated_weather[0]}
+          place={placeForecast.title}
         />
       ) : null}
     </View>

@@ -1,15 +1,22 @@
 import {RouteProp, useRoute} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, Dimensions, View} from 'react-native';
 import AppIntroSlider from 'react-native-app-intro-slider';
 
 import weatherApi from '../api/weatherRequest';
 import ApiError from '../components/ApiError';
 import WeatherCard from '../components/WeatherCard';
+import {Location} from '../models/Location';
 import {LocationSearch, WeatherResponse} from '../models/WeatherResponse';
 
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
+
 type WeatherStackParamList = {
-  WeatherDetail: {city: string};
+  WeatherDetail: {
+    city?: string | undefined;
+    userLocation?: Location | undefined;
+  };
 };
 
 type WeatherScreenRouteProp = RouteProp<WeatherStackParamList, 'WeatherDetail'>;
@@ -28,6 +35,12 @@ const WeatherDetail = () => {
 
       let location;
       if (params.city) location = await weatherApi.searchLocation(params.city);
+      if (params.userLocation)
+        location = await weatherApi.searchLocation(
+          null,
+          params.userLocation.coords?.latitude,
+          params.userLocation.coords?.longitude,
+        );
 
       if (location?.data) {
         const placeWeather = await weatherApi.getWeatherInfoFromId(
@@ -57,11 +70,18 @@ const WeatherDetail = () => {
         <ApiError handleRetryButton={handlePlaceForecast} />
       ) : null}
 
-      {!isError && !loading ? (
+      {!isError && !loading && placeForecast ? (
         <AppIntroSlider
-          data={placeForecast?.consolidated_weather || []}
+          style={styles.sliderContainer}
+          keyExtractor={item => item.id.toString()}
+          data={placeForecast.consolidated_weather}
+          showNextButton={false}
+          showDoneButton={false}
+          activeDotStyle={{backgroundColor: 'purple'}}
           renderItem={({item}) => (
-            <WeatherCard forecastWeather={item} place={placeForecast?.title} />
+            <View style={{paddingHorizontal: 20}}>
+              <WeatherCard forecastWeather={item} place={placeForecast.title} />
+            </View>
           )}
         />
       ) : null}
@@ -77,7 +97,10 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
     backgroundColor: 'whitesmoke',
+  },
+  sliderContainer: {
+    height: windowHeight,
+    width: windowWidth,
   },
 });

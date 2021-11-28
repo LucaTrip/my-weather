@@ -15,7 +15,7 @@ const HomeNavigator = () => (
       name="WeatherDetail"
       component={WeatherDetail}
       options={({route}) => ({
-        title: `${route.params?.city} forecast`,
+        title: `${route.params?.city || ''} forecast`,
       })}></HomeStack.Screen>
   </HomeStack.Navigator>
 );
