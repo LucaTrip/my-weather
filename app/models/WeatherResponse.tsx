@@ -1,4 +1,4 @@
-export interface WeatherLocationInfo {
+export interface PlaceForecast {
   id: number; // 4578046519541760,
   weather_state_name: string; // "Heavy Rain"
   weather_state_abbr: string; // "hr",
@@ -17,8 +17,15 @@ export interface WeatherLocationInfo {
 }
 
 export interface WeatherResponse {
-  consolidated_weather: WeatherLocationInfo[];
+  consolidated_weather: PlaceForecast[];
   time: string; // '2021-11-26T21:19:39.844231Z';
+  title: string; // 'London';
+  location_type: string; // 'City';
+  woeid: number; // 44418;
+  latt_long: string; // '51.506321,-0.12714';
+}
+
+export interface LocationSearch {
   title: string; // 'London';
   location_type: string; // 'City';
   woeid: number; // 44418;

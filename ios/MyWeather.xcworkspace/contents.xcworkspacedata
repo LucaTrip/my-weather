@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:empty_file.swift">
+   </FileRef>
+   <FileRef
       location = "group:MyWeather.xcodeproj">
    </FileRef>
    <FileRef

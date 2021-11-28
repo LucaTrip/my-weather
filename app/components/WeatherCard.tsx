@@ -1,137 +1,103 @@
-import moment from 'moment';
 import React, {useState} from 'react';
 import {Image, StyleSheet, Text, View, Modal} from 'react-native';
 import {FAB, Card, TextInput, Button} from 'react-native-paper';
+import moment from 'moment';
+
+import weatherApi from '../api/weatherRequest';
 import CustomSafeAreaView from './CustomSafeAreaView';
+import {PlaceForecast} from '../models/WeatherResponse';
+import CustomModal from './CustomModal';
 
 type Props = {
-  place: string;
-  forecastDate: string;
-  maxTemp: number;
-  minTemp: number;
-  weatherStateName: string;
-  iconURL: string;
-  handleModalCity: (city: string) => void;
+  place?: string;
+  forecastWeather?: PlaceForecast;
 };
 
-const WeatherCard: React.FC<Props> = ({
-  place,
-  forecastDate,
-  maxTemp,
-  minTemp,
-  weatherStateName,
-  iconURL,
-  handleModalCity,
-}) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [city, setCity] = React.useState('');
+const WeatherCard: React.FC<Props> = ({place, forecastWeather}) => {
+  const [showModal, setShowModal] = useState(false);
 
-  const modalWillDismiss = () => {
-    setModalVisible(!modalVisible);
-    setTimeout(() => {
-      setCity('');
-      handleModalCity(city);
-    }, 500);
+  const handleCloseModal = () => {
+    setShowModal(!showModal);
   };
 
-  let formattedDate = 'MAY 12'; /* moment(forecastDate, 'MMM DD'); */
-  let formattedHours = '12:12'; /* moment(forecastDate, 'hh:mm'); */
-
-  console.log('dsadsa', iconURL);
+  let formattedDate = '',
+    formattedHours = '',
+    iconURL = '',
+    minTemp = 0,
+    maxTemp = 0,
+    weatherStateName = '';
+  if (forecastWeather) {
+    formattedDate = moment(forecastWeather.created).format('MMM DD');
+    formattedHours = moment(forecastWeather.created).format('hh:mm');
+    iconURL = weatherApi.getWeatherStateIconURL(
+      forecastWeather.weather_state_abbr,
+    );
+    minTemp = Math.trunc(forecastWeather.min_temp);
+    maxTemp = Math.trunc(forecastWeather.max_temp);
+    weatherStateName = forecastWeather.weather_state_name;
+  }
 
   return (
     <>
-      <Card style={styles.card}>
-        <View style={styles.inlineContainer}>
-          <Text style={[styles.bigFont, styles.whiteFont]}>
-            {formattedHours}
-          </Text>
-          <Text style={styles.smallFont}>{formattedDate}</Text>
-        </View>
-
-        {iconURL.length ? (
-          <Image style={styles.centerImage} source={{uri: iconURL}} />
-        ) : null}
-
-        <View style={styles.inlineContainer}>
-          <Text style={styles.bigFont}>
-            {`${Math.trunc(maxTemp)}°`}
-            <Text style={styles.smallFont}>{`/${Math.trunc(minTemp)}°`}</Text>
-          </Text>
-          <Text style={styles.smallFont}>{weatherStateName}</Text>
-        </View>
-
-        <View style={styles.divider}></View>
-
-        <View style={styles.footerContainer}>
-          <Text
-            style={[styles.bigFont, styles.whiteFont, styles.uppercaseFont]}>
-            {place}
-          </Text>
-          <FAB
-            style={styles.fab}
-            small
-            icon="plus"
-            color="black"
-            onPress={() => setModalVisible(true)}
-          />
-        </View>
-      </Card>
-
-      <Modal
-        animationType="slide"
-        visible={modalVisible}
-        onRequestClose={modalWillDismiss}>
-        <CustomSafeAreaView style={styles.modalInnerContainer}>
-          <View style={styles.closeButtonContainer}>
-            <Button mode="text" onPress={modalWillDismiss}>
-              Close
-            </Button>
+      {forecastWeather ? (
+        <Card style={styles.card}>
+          <View style={styles.inlineContainer}>
+            <Text style={[styles.bigFont, styles.whiteFont]}>
+              {formattedHours}
+            </Text>
+            <Text style={styles.smallFont}>{formattedDate}</Text>
           </View>
 
-          <Text style={styles.info}>
-            Which city do you want to know the weather for today and for the
-            next 5 days?
-          </Text>
-          <TextInput
-            mode="outlined"
-            label="City"
-            placeholder="New York"
-            value={city}
-            autoCapitalize="sentences"
-            onChangeText={text => setCity(text)}
-          />
+          {iconURL.length ? (
+            <Image style={styles.centerImage} source={{uri: iconURL}} />
+          ) : null}
 
-          <Button
-            disabled={city.length ? false : true}
-            mode="contained"
-            onPress={modalWillDismiss}
-            style={styles.submitButton}>
-            Go
-          </Button>
-        </CustomSafeAreaView>
-      </Modal>
+          <View style={styles.inlineContainer}>
+            <Text style={styles.bigFont}>
+              {`${maxTemp}°`}
+              <Text style={styles.smallFont}>{`/ ${minTemp}°`}</Text>
+            </Text>
+            <Text style={styles.smallFont}>{weatherStateName}</Text>
+          </View>
+
+          <View style={styles.divider}></View>
+
+          <View style={styles.footerContainer}>
+            <Text
+              style={[styles.bigFont, styles.whiteFont, styles.uppercaseFont]}>
+              {place}
+            </Text>
+            <FAB
+              style={styles.fab}
+              small
+              icon="plus"
+              color="black"
+              onPress={() => setShowModal(true)}
+            />
+          </View>
+        </Card>
+      ) : null}
+
+      <CustomModal visibility={showModal} handleCloseModal={handleCloseModal} />
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  closeButtonContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 20,
-  },
-  info: {
-    marginBottom: 20,
-  },
-  submitButton: {
-    marginTop: 20,
-  },
   card: {
     borderRadius: 20,
     padding: 20,
     backgroundColor: '#59b4ab',
     width: '100%',
     color: 'black',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.34,
+    shadowRadius: 6.27,
+    elevation: 10,
   },
   bigFont: {fontSize: 40, color: 'black'},
   smallFont: {fontSize: 25, color: 'black'},
@@ -163,10 +129,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     backgroundColor: 'white',
-  },
-  modalInnerContainer: {
-    paddingHorizontal: 20,
-    backgroundColor: 'whitesmoke',
   },
 });
 

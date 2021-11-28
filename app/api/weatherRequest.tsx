@@ -1,4 +1,4 @@
-import {WeatherResponse} from '../models/WeatherResponse';
+import {LocationSearch, WeatherResponse} from '../models/WeatherResponse';
 import axiosInstance from './client';
 
 const endpointDefaultLocation = '/api/location';
@@ -9,18 +9,27 @@ const endpointPlaceInfo = '/api/location/search/';
 const getWeatherInfoFromId = (woeid: number) =>
   axiosInstance.get<WeatherResponse>(`${endpointDefaultLocation}/${woeid}/`);
 
-const getWeatherStateIconURL = (weatherState: string) => {
-  return `${endpointWeatherStateIcon}/${weatherState}.png`;
-};
+const getWeatherStateIconURL = (weatherState: string) =>
+  `${endpointWeatherStateIcon}/${weatherState}.png`;
 
-const getWOEIdFromPlace = (query: string) => {
-  axiosInstance.get<WeatherResponse>(endpointDefaultLocation, {
-    params: {query},
+const searchLocation = (
+  place?: string,
+  latitude?: number,
+  longitude?: number,
+) => {
+  let customParams = {};
+
+  if (place) customParams = {query: place};
+  if (latitude && longitude)
+    customParams = {lattlong: `${latitude},${longitude}`};
+
+  return axiosInstance.get<LocationSearch[]>(endpointPlaceInfo, {
+    params: customParams,
   });
 };
 
 export default {
   getWeatherInfoFromId,
   getWeatherStateIconURL,
-  getWOEIdFromPlace,
+  searchLocation,
 };

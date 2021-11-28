@@ -1,11 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Button, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useSelector} from 'react-redux';
 
 import weatherApi from '../api/weatherRequest';
-import WeatherDetail from './WeatherDetail';
 import WeatherCard from '../components/WeatherCard';
+import ApiError from '../components/ApiError';
+import {WeatherResponse} from '../models/WeatherResponse';
 
 type HomeStackParamList = {
   Home: undefined;
@@ -18,16 +20,11 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 const HomeScreen = () => {
-  const [weatherInfo, setWeatherInfo] = useState({
-    place: '',
-    forecastDate: '',
-    maxTemp: 0.0,
-    minTemp: 0.0,
-    weatherStateName: '',
-    iconURL: '',
-  });
+  const [placeForecast, setPlaceForecast] = useState<WeatherResponse>();
   const [loading, setLoading] = useState(false);
   const [isError, setIsError] = useState(false);
+
+  const cityFromStore = useSelector((state: StoreState) => state.city);
 
   const navigation = useNavigation<HomeScreenNavigationProp>();
 
@@ -36,23 +33,9 @@ const HomeScreen = () => {
       setLoading(true);
       setIsError(false);
 
-      const defaultWeatherResponse = await weatherApi.getWeatherInfoFromId(
-        44418,
-      );
+      const placeWeather = await weatherApi.getWeatherInfoFromId(44418);
 
-      setWeatherInfo({
-        place: defaultWeatherResponse.data.title,
-        forecastDate: defaultWeatherResponse.data.time,
-        maxTemp: defaultWeatherResponse.data.consolidated_weather[0].max_temp,
-        minTemp: defaultWeatherResponse.data.consolidated_weather[0].min_temp,
-        weatherStateName:
-          defaultWeatherResponse.data.consolidated_weather[0]
-            .weather_state_name,
-        iconURL: weatherApi.getWeatherStateIconURL(
-          defaultWeatherResponse.data.consolidated_weather[0]
-            .weather_state_abbr,
-        ),
-      });
+      setPlaceForecast(placeWeather.data);
     } catch (error) {
       setIsError(true);
     } finally {
@@ -61,28 +44,23 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    handleDefaultWeatherLocation();
-  }, []);
+    if (!placeForecast) handleDefaultWeatherLocation();
 
-  const handleModalCity = (city: string) => {
-    if (city) navigation.push('WeatherDetail', {city});
-  };
+    if (cityFromStore) navigation.push('WeatherDetail', {city: cityFromStore});
+  }, [placeForecast, cityFromStore]);
 
   return (
     <View style={styles.mainContainer}>
       <ActivityIndicator animating={loading} size="large" />
 
-      {isError && !loading ? <Text>Something went wrong</Text> : null}
+      {isError && !loading ? (
+        <ApiError handleRetryButton={handleDefaultWeatherLocation} />
+      ) : null}
 
       {!isError && !loading ? (
         <WeatherCard
-          handleModalCity={handleModalCity}
-          place={weatherInfo.place}
-          forecastDate={weatherInfo.forecastDate}
-          maxTemp={weatherInfo.maxTemp}
-          minTemp={weatherInfo.minTemp}
-          weatherStateName={weatherInfo.weatherStateName}
-          iconURL={weatherInfo.iconURL}
+          forecastWeather={placeForecast?.consolidated_weather[0]}
+          place={placeForecast?.title}
         />
       ) : null}
     </View>
