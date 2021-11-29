@@ -7,7 +7,7 @@ import weatherApi from '../api/weatherRequest';
 import ApiError from '../components/ApiError';
 import WeatherCard from '../components/WeatherCard';
 import {Location} from '../models/Location';
-import {LocationSearch, WeatherResponse} from '../models/WeatherResponse';
+import {WeatherResponse} from '../models/WeatherResponse';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -16,6 +16,7 @@ type WeatherStackParamList = {
   WeatherDetail: {
     city?: string | undefined;
     userLocation?: Location | undefined;
+    cityId?: string | undefined;
   };
 };
 
@@ -33,7 +34,9 @@ const WeatherDetail = () => {
       setLoading(true);
       setIsError(false);
 
-      let location;
+      let location, placeWeather;
+      if (params.cityId)
+        placeWeather = await weatherApi.getWeatherInfoFromId(params.cityId);
       if (params.city) location = await weatherApi.searchLocation(params.city);
       if (params.userLocation)
         location = await weatherApi.searchLocation(
@@ -42,9 +45,11 @@ const WeatherDetail = () => {
           params.userLocation.coords?.longitude,
         );
 
-      if (location?.data) {
-        const placeWeather = await weatherApi.getWeatherInfoFromId(
-          location.data[0].woeid,
+      if (placeWeather) {
+        setPlaceForecast(placeWeather.data);
+      } else if (location?.data) {
+        placeWeather = await weatherApi.getWeatherInfoFromId(
+          location.data[0].woeid.toString(),
         );
 
         setPlaceForecast(placeWeather.data);
@@ -60,7 +65,7 @@ const WeatherDetail = () => {
 
   useEffect(() => {
     handlePlaceForecast();
-  }, []);
+  }, [params]);
 
   return (
     <View style={styles.mainContainer}>
@@ -80,7 +85,11 @@ const WeatherDetail = () => {
           activeDotStyle={{backgroundColor: 'purple'}}
           renderItem={({item}) => (
             <View style={{paddingHorizontal: 20}}>
-              <WeatherCard forecastWeather={item} place={placeForecast.title} />
+              <WeatherCard
+                forecastWeather={item}
+                place={placeForecast.title}
+                showModalButton={false}
+              />
             </View>
           )}
         />

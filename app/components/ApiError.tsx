@@ -15,7 +15,7 @@ const ApiError: React.FC<Props> = ({handleRetryButton}) => {
   };
 
   return (
-    <View>
+    <View style={styles.container}>
       <Text style={styles.text}>
         Most likely the place you have chosen has not been indexed, try changing
         places or trying again.
@@ -38,6 +38,9 @@ const ApiError: React.FC<Props> = ({handleRetryButton}) => {
 export default ApiError;
 
 const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+  },
   text: {
     fontSize: 16,
     color: 'black',

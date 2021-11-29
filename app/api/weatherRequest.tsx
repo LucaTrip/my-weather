@@ -6,7 +6,7 @@ const endpointWeatherStateIcon =
   'https://www.metaweather.com/static/img/weather/png/64';
 const endpointPlaceInfo = '/api/location/search/';
 
-const getWeatherInfoFromId = (woeid: number) =>
+const getWeatherInfoFromId = (woeid: string) =>
   axiosInstance.get<WeatherResponse>(`${endpointDefaultLocation}/${woeid}/`);
 
 const getWeatherStateIconURL = (weatherState: string) =>

@@ -35,29 +35,25 @@ type Props = {
 const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
   const [city, setCity] = useState('');
   const [fetchingLocation, setFetchingLocation] = useState(false);
-  const [location, setLocation] = useState<Location>();
 
   const citiesFromStore = useSelector((state: StoreState) => state.cities);
 
   const dispatch: Dispatch<any> = useDispatch();
 
-  const modalWillDismiss = (useLocation?: boolean) => {
+  const modalWillDismiss = (cityName?: string | null, location?: Location) => {
     handleCloseModal();
 
-    if (useLocation) {
-      setTimeout(() => {
-        dispatch(addLocationToSearch(location!));
-        setCity('');
-      }, 500);
-      return;
-    }
-
-    if (city.length) {
-      setTimeout(() => {
+    setTimeout(() => {
+      if (cityName) {
+        dispatch(addCityToSearch(cityName));
+      } else if (location) {
+        dispatch(addLocationToSearch(location));
+      } else if (city.length) {
         dispatch(addCityToSearch(city));
-        setCity('');
-      }, 500);
-    }
+      }
+
+      if (city.length) setCity('');
+    }, 100);
   };
 
   const handleUserLocation = async () => {
@@ -75,8 +71,7 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
               response => {
                 console.log('[getCurrentPosition] success', response);
                 setFetchingLocation(false);
-                setLocation(response);
-                modalWillDismiss(true);
+                modalWillDismiss(null, response);
               },
               error => {
                 console.log('[getCurrentPosition] error', error);
@@ -119,7 +114,7 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
     <Modal
       animationType="slide"
       visible={visibility}
-      onRequestClose={modalWillDismiss}>
+      onRequestClose={() => modalWillDismiss()}>
       <CustomSafeAreaView style={styles.modalInnerContainer}>
         <View style={styles.closeButtonContainer}>
           <TouchableOpacity>
@@ -131,7 +126,7 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
             />
           </TouchableOpacity>
 
-          <Button mode="text" onPress={modalWillDismiss}>
+          <Button mode="text" onPress={() => modalWillDismiss()}>
             Close
           </Button>
         </View>
@@ -139,7 +134,7 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
         {fetchingLocation ? (
           <View style={{flexDirection: 'row', marginBottom: 20}}>
             <ActivityIndicator size="small" />
-            <Text style={{color: 'balck'}}>
+            <Text style={{color: 'black', marginLeft: 10}}>
               We are retrieving your current position
             </Text>
           </View>
@@ -154,14 +149,15 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
           label="City"
           placeholder="New York"
           value={city}
-          autoCapitalize="sentences"
+          autoCapitalize="words"
+          autoCorrect={false}
           onChangeText={text => setCity(text)}
         />
 
         <Button
           disabled={city.length ? false : true}
           mode="contained"
-          onPress={modalWillDismiss}
+          onPress={() => modalWillDismiss()}
           style={styles.submitButton}>
           Go
         </Button>
@@ -171,6 +167,8 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
 
           {citiesFromStore?.length ? (
             <FlatList
+              style={{flex: 1}}
+              contentContainerStyle={{paddingBottom: 30}}
               data={citiesFromStore}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item, index}) => (
@@ -179,10 +177,7 @@ const CustomModal: React.FC<Props> = ({visibility, handleCloseModal}) => {
                     styles.latestSearchItem,
                     index % 2 === 0 ? styles.evenItem : styles.oddItem,
                   ]}
-                  onPress={() => {
-                    setCity(item);
-                    modalWillDismiss();
-                  }}>
+                  onPress={() => modalWillDismiss(item)}>
                   <Text style={styles.latestSearchText}>{item}</Text>
                   <Icon name="chevron-right" size={30} color="black" />
                 </TouchableOpacity>
@@ -221,6 +216,7 @@ const styles = StyleSheet.create({
   },
   latestSearches: {
     marginTop: 20,
+    flex: 1,
   },
   latestSearchesTitle: {
     color: 'black',

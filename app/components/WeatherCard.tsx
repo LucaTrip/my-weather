@@ -10,17 +10,22 @@ import CustomModal from './CustomModal';
 type Props = {
   place?: string;
   forecastWeather: PlaceForecast;
+  showModalButton?: boolean;
 };
 
-const WeatherCard: React.FC<Props> = ({place, forecastWeather}) => {
+const WeatherCard: React.FC<Props> = ({
+  place,
+  forecastWeather,
+  showModalButton = true,
+}) => {
   const [showModal, setShowModal] = useState(false);
 
   const handleCloseModal = () => {
     setShowModal(!showModal);
   };
 
-  let formattedDate = moment(forecastWeather.created).format('MMM DD'),
-    formattedHours = moment(forecastWeather.applicable_date).format('hh:mm'),
+  let formattedDate = moment(forecastWeather.applicable_date).format('MMM DD'),
+    formattedHours = moment(forecastWeather.created).format('hh:mm'),
     iconURL = weatherApi.getWeatherStateIconURL(
       forecastWeather.weather_state_abbr,
     ),
@@ -60,17 +65,19 @@ const WeatherCard: React.FC<Props> = ({place, forecastWeather}) => {
                 styles.bigFont,
                 styles.whiteFont,
                 styles.uppercaseFont,
-                {width: '80%'},
+                {width: showModalButton ? '80%' : '100%'},
               ]}>
               {place}
             </Text>
-            <FAB
-              style={styles.fab}
-              small
-              icon="plus"
-              color="black"
-              onPress={() => setShowModal(true)}
-            />
+            {showModalButton ? (
+              <FAB
+                style={styles.fab}
+                small
+                icon="plus"
+                color="black"
+                onPress={() => setShowModal(true)}
+              />
+            ) : null}
           </View>
         </Card>
       ) : null}

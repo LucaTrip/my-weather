@@ -2,8 +2,9 @@ import * as actionTypes from './actionTypes';
 import {StoreAction, StoreState} from './type';
 
 const initialState = {
-  city: '',
+  city: undefined,
   location: undefined,
+  qrScannerStatus: undefined,
   cities: [],
 };
 
@@ -16,13 +17,23 @@ const reducer = (
       return {
         ...state,
         city: action.city,
+        location: undefined,
         cities: [...state.cities, action.city!],
       };
 
     case actionTypes.LOCATION_TO_SEARCH:
       return {
         ...state,
+        city: undefined,
         location: action.location,
+      };
+
+    case actionTypes.SET_QR_SCANNER_STATUS:
+      return {
+        ...state,
+        city: undefined,
+        location: undefined,
+        qrScannerStatus: action.qrScannerStatus,
       };
   }
 
